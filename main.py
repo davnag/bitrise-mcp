@@ -461,6 +461,43 @@ async def trigger_bitrise_pipeline_build(
 
 
 @mcp_tool(
+    api_groups=["builds"],
+    description="Trigger a new simplified build/workflow for a specified Bitrise app.",
+)
+async def trigger_bitrise_workflow_build(
+    app_slug: str = Field(
+        description='Identifier of the Bitrise app (e.g., "d8db74e2675d54c4" or "8eb495d0-f653-4eed-910b-8d6b56cc0ec7")',
+    ),
+    branch: str = Field(
+        default="main",
+        description="The branch to build",
+    ),
+    workflow_id: str = Field(
+        default=None,
+        description="The workflow name to build",
+    ),
+    commit_message: str = Field(
+        default=None,
+        description="The commit message for the build",
+    ),
+) -> str:
+    url = f"{BITRISE_API_BASE}/apps/{app_slug}/builds"
+    build_params = {"branch": branch}
+
+    if workflow_id:
+        build_params["workflow_id"] = workflow_id
+    if commit_message:
+        build_params["commit_message"] = commit_message
+
+    body = {
+        "build_params": build_params,
+        "hook_info": {"type": "bitrise"},
+    }
+
+    return await call_api("POST", url, body)
+
+
+@mcp_tool(
     api_groups=["builds", "read-only"],
     description="Get a specific build of a given app.",
 )
